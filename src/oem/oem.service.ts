@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOemDto } from './dto/create-oem.dto';
-import { UpdateOemDto } from './dto/update-oem.dto';
 import {
   TokenStandard,
   mintV1,
@@ -17,10 +15,9 @@ import {
   transactionBuilder,
 } from '@metaplex-foundation/umi';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-adapters';
 import { irysUploader } from '@metaplex-foundation/umi-uploader-irys';
 import { generateMnemonic, mnemonicToSeed } from 'bip39';
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, Signer } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { transferSol } from '@metaplex-foundation/mpl-toolbox';
 
 @Injectable()
@@ -67,7 +64,7 @@ export class OemService {
     //Generate Keypair from the seed
     const keypair = this.umi.eddsa.createKeypairFromSeed(seed32);
     const signer = createSignerFromKeypair(this.umi, keypair);
-    const newUmi = this.generateUmi(signer);
+    // const newUmi = this.generateUmi(signer);
 
     // let balance = await newUmi.rpc.getBalance(newUmi.identity.publicKey);
     // let balanceSol = Number(balance.basisPoints) / LAMPORTS_PER_SOL;
