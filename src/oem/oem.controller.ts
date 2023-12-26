@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { OemService } from './oem.service';
-import { KeypairSigner } from '@metaplex-foundation/umi';
+import { KeypairSigner, PublicKey } from '@metaplex-foundation/umi';
 import { CreateWalletsDto } from './dto/create-wallets.dto';
 import { LoginOemDto } from './dto/login-oem.dto';
 
@@ -13,6 +13,13 @@ export class OemController {
   @Get('wallet-balance/:pubkey')
   async getWalletBalance(@Param('pubkey') pubkey: string): Promise<Number> {
     return this.oemService.getWalletBalance(pubkey);
+  }
+
+  /* ----------------- Get the data of tokens in the wallet --------------- */
+
+  @Get('token-data/:walletAddress')
+  async getTokenData(@Param('walletAddress') walletAddress: string): Promise<JSON> {
+    return this.oemService.getTokenData(walletAddress);
   }
 
   /*---------- Used to create a wallet and generate a new instance of OEM with the given signer-------- */

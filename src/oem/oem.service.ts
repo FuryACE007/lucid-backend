@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   TokenStandard,
+  fetchAllDigitalAssetByOwner,
   mintV1,
   mplTokenMetadata,
 } from '@metaplex-foundation/mpl-token-metadata';
@@ -9,7 +10,6 @@ import {
   SolAmount,
   Umi,
   createSignerFromKeypair,
-  generatedSignerIdentity,
   publicKey,
   signerIdentity,
   transactionBuilder,
@@ -17,8 +17,9 @@ import {
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { irysUploader } from '@metaplex-foundation/umi-uploader-irys';
 import { generateMnemonic, mnemonicToSeed } from 'bip39';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { transferSol } from '@metaplex-foundation/mpl-toolbox';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 
 @Injectable()
 export class OemService {
@@ -187,11 +188,42 @@ export class OemService {
     return signer; // This signer can then be stored on local storage and then sent along with every request
   }
 
-  /* ================================ Get wallet balanc e========================================= */
+  /* ================================ Get wallet balance========================================= */
   async getWalletBalance(pubkey: string): Promise<Number> {
     const balance = await this.umi.rpc.getBalance(publicKey(pubkey));
     const balanceSol = Number(balance.basisPoints) / LAMPORTS_PER_SOL;
 
     return balanceSol;
+  }
+  /* ================================ Get token data========================================= */
+
+  async getTokenData(walletAddress: string): Promise<JSON> {
+    const connection = new Connection(process.env.RPC_ENDPOINT);
+    const assets = await fetchAllDigitalAssetByOwner(
+      this.umi,
+      publicKey(walletAddress),
+    );
+    if (assets.length < 0) throw new Error('No assets found');
+    const asset = assets.at(0);
+    const pub = new PublicKey(asset.publicKey);
+
+    const tokenAccount = await getAssociatedTokenAddress(
+      pub,
+      new PublicKey('6Vt52q418Q63KD1Uk1bgRjwdaoJMUsRLNqpMiYu4N1s9'),
+    );
+
+    let balance = await connection.getTokenAccountBalance(tokenAccount);
+    let balanceValue = 0;
+    if (!balance.value.uiAmount) balanceValue = 0;
+    else balanceValue = balance.value.uiAmount;
+
+    const result = {
+      name: asset.metadata.name,
+      symbol: asset.metadata.symbol,
+      metadataUri: asset.metadata.uri,
+      balance: balanceValue,
+    };
+
+    return JSON.parse(JSON.stringify(result));
   }
 }
